@@ -3,9 +3,11 @@ from datetime import datetime
 from urllib.parse import urlparse, unquote
 
 
-payload_apod = {'start_date': '2022-05-18',
-            'end_date': '2022-05-18', #Взял интервал по одному дню
-            'api_key': 'ql1pnWkzzifmIEKTQkbLse2beYOMOToFbmNYCYQL'}
+payload_apod = {
+    #'start_date': '2022-01-01', 
+    #'end_date': '2022-01-02',
+    'api_key': 'ql1pnWkzzifmIEKTQkbLse2beYOMOToFbmNYCYQL'
+}
 api_key = 'ql1pnWkzzifmIEKTQkbLse2beYOMOToFbmNYCYQL'
 url_apod = 'https://api.nasa.gov/planetary/apod'
 url_spacex = 'https://api.spacexdata.com/v4/launches'
@@ -41,26 +43,30 @@ def downl_img_to_fold(url, path, serial_number):
 
 
 def fetch_spacex_last_launch(url_spacex, path_spacex):
-    '''Получает и загружает фотографии последнего запуска шатла.'''
+    '''Функция получает фотографии последнего запуска шатла.'''
     responce = requests.get(url_spacex)
     for item in reversed(responce.json()):
         if item['links']['flickr']['original'] != []:
             list_of_spacex_links = item['links']['flickr']['original']
             break
     for serial_number, link in enumerate(list_of_spacex_links):
-        print(link)
         downl_img_to_fold(link, path_spacex, serial_number)
 
 
 def fetch_nasa_apod_images(url_apod, payload, path_apod):
-    '''Функция загружает фотографии NASA из раздела =APOD='''
+    '''Функция получает фотографии NASA из раздела =APOD='''
     response = requests.get(url_apod, params=payload)
-    for serial_number, response in enumerate(response.json()):
-        downl_img_to_fold(response['url'], path_apod, serial_number)
+    if type(type(response.json())) == list:
+        for serial_number, response in enumerate(response.json()):
+            downl_img_to_fold(response['url'], path_apod, serial_number)
+    else:
+        serial_number = datetime.now().date()
+        downl_img_to_fold(response.json()['url'], path_apod, serial_number)
+        
 
 
 def fetch_nasa_epic_images(url_epic, path_epic, api_key):
-    '''Функция загружает фотографии NASA из раздела =EPIC='''
+    '''Функция получает фотографии NASA из раздела =EPIC='''
     response = requests.get(url_epic)
     response.raise_for_status()
     list_of_epic = []
