@@ -7,7 +7,7 @@ async def main():
     async with bot:
         await bot.send_document(
             chat_id=-1001633682543, 
-            document=open('images/apod/0.jpg', 'rb')
+            document=open('images/apod/1.jpg', 'rb')
         )
         
         

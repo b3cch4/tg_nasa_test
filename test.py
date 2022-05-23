@@ -1,10 +1,7 @@
-list = []
-while(True):
-    a = input("Введите число: ")
-    print(type(a))
-    if a != a.empty:
-        list.append(a)
-    else:
-        break
-    
-print(min(list))
+import os, re
+
+#path = re.match(r'images/\D/')
+
+for filename in os.listdir(re.match(r'images/\D/')):
+        with open(os.path.join(re.match(r'images/\D/'), filename), 'r') as f:
+            print(f.name)

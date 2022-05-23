@@ -1,17 +1,24 @@
 import os, requests
+import asyncio
+import telegram
+from traceback import print_tb
 from datetime import datetime
 from urllib.parse import urlparse, unquote
+from dotenv import load_dotenv
 
+load_dotenv()
 
+API_KEY_NASA = os.getenv('API_KEY_NASA')
+API_BOT_TG = os.getenv('API_BOT_TG')
 payload_apod = {
-    #'start_date': '2022-01-01', 
-    #'end_date': '2022-01-02',
-    'api_key': 'ql1pnWkzzifmIEKTQkbLse2beYOMOToFbmNYCYQL'
+    'start_date': '2022-01-01', 
+    'end_date': '2022-01-04',
+    'api_key': API_KEY_NASA
 }
-api_key = 'ql1pnWkzzifmIEKTQkbLse2beYOMOToFbmNYCYQL'
+api_key = f'{API_KEY_NASA}'
 url_apod = 'https://api.nasa.gov/planetary/apod'
-url_spacex = 'https://api.spacexdata.com/v4/launches'
-url_epic = 'https://api.nasa.gov/EPIC/api/natural?api_key=ql1pnWkzzifmIEKTQkbLse2beYOMOToFbmNYCYQL'
+url_spacex = 'https://api.spacexdata.com/v4/launches/'
+url_epic = f'https://api.nasa.gov/EPIC/api/natural?api_key={API_KEY_NASA}'
 path_spacex = "images/spacex"
 path_apod = "images/apod"
 path_epic = "images/epic"
@@ -56,15 +63,14 @@ def fetch_spacex_last_launch(url_spacex, path_spacex):
 def fetch_nasa_apod_images(url_apod, payload, path_apod):
     '''Функция получает фотографии NASA из раздела =APOD='''
     response = requests.get(url_apod, params=payload)
-    if type(type(response.json())) == list:
-        for serial_number, response in enumerate(response.json()):
-            downl_img_to_fold(response['url'], path_apod, serial_number)
-    else:
+    if type(response.json()) == dict:
         serial_number = datetime.now().date()
         downl_img_to_fold(response.json()['url'], path_apod, serial_number)
+    else:
+        for serial_number, response in enumerate(response.json()):
+            downl_img_to_fold(response['url'], path_apod, serial_number)
         
-
-
+        
 def fetch_nasa_epic_images(url_epic, path_epic, api_key):
     '''Функция получает фотографии NASA из раздела =EPIC='''
     response = requests.get(url_epic)
@@ -84,11 +90,23 @@ def fetch_nasa_epic_images(url_epic, path_epic, api_key):
         downl_img_to_fold(item_url, path_epic, serial_number)
         
         
-def main():
+
+
+async def main():
     fetch_spacex_last_launch(url_spacex, path_spacex)
     fetch_nasa_apod_images(url_apod, payload_apod, path_apod)
     fetch_nasa_epic_images(url_epic, path_epic, api_key)
-    
+    bot = telegram.Bot(f'{API_BOT_TG}')
+    path = ['apod', 'epic', 'spacex']
+    for sub_path in path:
+        for filename in os.listdir(f"images/{sub_path}/"):
+            with open(os.path.join(f"images/{sub_path}/", filename), 'r') as f:
+                async with bot:
+                    await bot.send_document(
+                        chat_id=-1001633682543, 
+                        document=open(f'{f.name}', 'rb')
+                    )
+   
     
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
